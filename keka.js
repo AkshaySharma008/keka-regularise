@@ -11,7 +11,7 @@
 //
 // Options for preview/run:
 //   --period SEP       scan only this tab (default: "30 DAYS" + previous month)
-//   --include-today    also regularise today (scheduled runs do this; they run after work)
+//   --include-today    also regularise today before your shift end time (after it, today is included anyway)
 //   --headed           show the browser while it runs
 //   --notify           show a macOS notification with the result
 
@@ -167,10 +167,15 @@ async function readRows(page) {
 const now = new Date();
 const TODAY_PREFIX = `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()]}, ${String(now.getDate()).padStart(2, '0')} `;
 
+function shiftOver() {
+  const [h, m] = config.outTime.split(':').map(Number);
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+}
+
 function needsRegularising(row) {
   if (config.skipDates.includes(row.label)) return null;
-  // Today is still in progress unless the run happens after work.
-  if (row.label.startsWith(TODAY_PREFIX) && !flag('--include-today')) return null;
+  // Today counts once the shift has ended (or when forced with --include-today).
+  if (row.label.startsWith(TODAY_PREFIX) && !flag('--include-today') && !shiftOver()) return null;
   if (row.kind === 'noentry') return config.includeNoEntryDays ? 'no time entries' : null;
   if (row.kind !== 'worked') return null;
   const parts = row.text.split(' | ');
