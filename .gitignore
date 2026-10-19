@@ -1,0 +1,11 @@
+node_modules/
+
+# Personal data: each user's own login, settings and history. Never commit these.
+auth.json
+keka-profile/
+config.json
+submitted.json
+logs/
+
+share/
+.DS_Store
